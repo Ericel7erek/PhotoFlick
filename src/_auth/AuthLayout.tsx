@@ -1,5 +1,5 @@
 import { Outlet, Navigate } from "react-router-dom";
-
+import Logo from '/Users/ericmalah/Desktop/PhotoFlick/src/Logo.png';
 
 const AuthLayout = () => {
     const isAuthenticated = false;
@@ -14,8 +14,9 @@ const AuthLayout = () => {
                 </section>)}
 
             <img
-                src="https://cdn.pixabay.com/photo/2017/"
-                alt="logo" />
+                src={Logo}
+                alt="logo"
+                className="hidden xl:block h-screen w-1/2 object-cover bg-no-repeat" />
         </>
     )
 }
