@@ -40,9 +40,10 @@ const SignUp = () => {
     return (
 
         <Form {...form}>
-
-            <img src='https://cdn.worldvectorlogo.com/logos/devil68-svg.svg' alt="logo" className=" flex-start flex-col w-9" />
-
+            <div className="max-h-12 flex-center flex-col" >
+                <img src='/assets/GSlogo-3.svg' alt="logo" className="max-h-12 flex-center flex-col" />
+                <h2 className="max-h-12 flex-center flex-col mb-5" >Create a new account</h2>
+            </div>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
                 <FormField
                     control={form.control}

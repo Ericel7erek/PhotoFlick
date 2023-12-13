@@ -1,5 +1,5 @@
 import { Outlet, Navigate } from "react-router-dom";
-import Logo from '/Users/ericmalah/Desktop/PhotoFlick/src/Logo.png';
+
 
 const AuthLayout = () => {
     const isAuthenticated = false;
@@ -14,7 +14,7 @@ const AuthLayout = () => {
                 </section>)}
 
             <img
-                src={Logo}
+                src="/assets/Logo-2.svg"
                 alt="logo"
                 className="hidden xl:block h-screen w-1/2 object-cover bg-no-repeat" />
         </>
