@@ -15,7 +15,7 @@ import { Input } from "@/components/ui/input";
 import { SignInValidation } from "@/lib/validation";
 import Loader from "@/components/shared/Loader";
 import { useToast } from "@/components/ui/use-toast";
-import { useCreateUserAccount, useSignInAccount } from "@/lib/react-query/queriesAndMutations";
+import { useSignInAccount } from "@/lib/react-query/queriesAndMutations";
 import { useUserContext } from "@/context/AuthContext";
 
 
@@ -70,7 +70,7 @@ const SignInForm = () => {
 
         <Form {...form}>
             <div className="sm:w-420 flex-center flex-col" >
-                <img src='/assets/GSlogo-3.svg' alt="logo" className="max-h-11" />
+                <img src='/assets/svg-4.png' alt="logo" className="" />
 
                 <h2 className="h3-bold md:h2-bold pt-5 sm:pt-12" >Create a new account</h2>
 

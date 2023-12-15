@@ -81,7 +81,7 @@ const SignUpForm = () => {
 
         <Form {...form}>
             <div className="sm:w-420 flex-center flex-col" >
-                <img src='/assets/GSlogo-3.svg' alt="logo" className="max-h-11" />
+                <img src='/assets/svg-4.png' alt="logo" className="mt-20" />
 
                 <h2 className="h3-bold md:h2-bold pt-5 sm:pt-12" >Create a new account</h2>
 
@@ -146,7 +146,7 @@ const SignUpForm = () => {
                                 <Loader /> Loading...
                             </div>) : "Sign up"}
                     </ Button>
-                    <p className="text-small-regular text-light-2 text-center mt-2" >
+                    <p className="text-small-regular text-light-2 text-center mt-2 mb-2" >
                         Already have an account?{" "}
                         <Link to="/sign-in" className="text-primary-500 text-small-semibold ml-1" >
                             Log in
