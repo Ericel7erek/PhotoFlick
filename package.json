@@ -24,6 +24,8 @@
     "react-dom": "^18.2.0",
     "react-dropzone": "^14.2.3",
     "react-hook-form": "^7.49.0",
+    "react-hook-inview": "^4.5.0",
+    "react-intersection-observer": "^9.5.3",
     "react-router-dom": "^6.20.1",
     "sass": "^1.69.5",
     "tailwind-merge": "^2.1.0",
