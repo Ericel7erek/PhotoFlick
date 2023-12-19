@@ -3,7 +3,7 @@ import SignInForm from './_auth/forms/SignInForm';
 import SignUpForm from './_auth/forms/SignUpForm';
 import AuthLayout from './_auth/AuthLayout';
 import { Routes, Route } from 'react-router-dom'
-import { Home, LikedPosts } from './_root/pages';
+import { Home } from './_root/pages';
 import RootLayout from './_root/RootLayout';
 import { Toaster } from './components/ui/toaster';
 import AllUsers from './_root/pages/AllUsers';

@@ -13,7 +13,7 @@ const PostDetails = () => {
     const { id } = useParams();
     const { user } = useUserContext();
 
-    const { data: post, isPending } = useGetPostById(id);
+    const { data: post, isPending } = useGetPostById(id || '');
     const { data: userPosts, isPending: isUserPostLoading } = useGetUserPosts(
         post?.creator.$id
     );
@@ -24,9 +24,15 @@ const PostDetails = () => {
     );
 
     const handleDeletePost = () => {
-        deletePost({ postId: id, imageId: post?.imageId });
-        navigate(-1);
+        if (id) {
+            deletePost({ postId: id, imageId: post?.imageId });
+            navigate(-1);
+        } else {
+            // Handle the case where id is undefined
+            console.error("Cannot delete post without a valid id");
+        }
     };
+
 
     return (
         <div className="post_details-container">

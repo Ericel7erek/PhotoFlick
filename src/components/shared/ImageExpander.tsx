@@ -27,12 +27,12 @@ const ImageExpander: React.FC<ImageExpanderProps> = ({ imageUrl }) => {
     useEffect(() => {
         // Add event listener to the overlay when the component mounts
         if (isExpanded) {
-            document.addEventListener('click', handleOverlayClick);
+            document.addEventListener('click', handleOverlayClick as unknown as (e: MouseEvent) => void);
         }
 
         // Remove event listener when the component unmounts
         return () => {
-            document.removeEventListener('click', handleOverlayClick);
+            document.removeEventListener('click', handleOverlayClick as unknown as (e: MouseEvent) => void);
         };
     }, [isExpanded]);
 
