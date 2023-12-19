@@ -70,7 +70,7 @@ const SignInForm = () => {
 
         <Form {...form}>
             <div className="sm:w-420 flex-center flex-col" >
-                <img src='/assets/svg-4.png' alt="logo" className="" />
+                <img src='/assets/92CBC808-B3FA-4626-94A1-BCCE74C55A1B_1_201_a.jpeg' alt="logo" width={200} />
 
                 <h2 className="h3-bold md:h2-bold pt-5 sm:pt-12" >Create a new account</h2>
 

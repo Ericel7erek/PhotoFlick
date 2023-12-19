@@ -14,9 +14,11 @@ const AuthLayout = () => {
                 </section>)}
 
             <img
-                src="/assets/Logo-2.svg"
+                src="/assets/Retro Smoke and Round Light Desktop Wallpapers.png"
                 alt="logo"
                 className="hidden xl:block h-screen w-1/2 object-cover bg-no-repeat " />
+
+
         </>
     )
 }
