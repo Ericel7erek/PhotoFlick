@@ -1,11 +1,17 @@
-import GridPostList from "@/components/shared/GridPostList";
+import { useParams, Link, useNavigate } from "react-router-dom";
+
+import { Button } from "@/components/ui/button";
 import Loader from "@/components/shared/Loader";
 import PostStats from "@/components/shared/PostStats";
-import { Button } from "@/components/ui/button";
-import { useUserContext } from "@/context/AuthContext";
-import { useDeletePost, useGetPostById, useGetUserPosts } from "@/lib/react-query/queriesAndMutations"
+import GridPostList from "@/components/shared/GridPostList";
+
+import {
+    useGetPostById,
+    useGetUserPosts,
+    useDeletePost,
+} from "@/lib/react-query/queriesAndMutations";
 import { multiFormatDateString } from "@/lib/utils";
-import { Link, useNavigate, useParams } from "react-router-dom";
+import { useUserContext } from "@/context/AuthContext";
 
 const PostDetails = () => {
     const navigate = useNavigate();
@@ -19,9 +25,9 @@ const PostDetails = () => {
     const { mutate: deletePost } = useDeletePost();
 
     const relatedPosts = userPosts?.documents.filter(
-        (userPost: { $id: string | undefined; }) => userPost.$id !== id
+        (userPost) => userPost.$id !== id
     );
-    // 
+
     const handleDeletePost = () => {
         deletePost({ postId: id, imageId: post?.imageId });
         navigate(-1);
@@ -141,7 +147,7 @@ const PostDetails = () => {
                 {isUserPostLoading || !relatedPosts ? (
                     <Loader />
                 ) : (
-                    <GridPostList posts={relatedPosts} showUser={false} showStats={false} />
+                    <GridPostList posts={relatedPosts} />
                 )}
             </div>
         </div>
