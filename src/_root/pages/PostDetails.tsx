@@ -1,5 +1,4 @@
 import GridPostList from "@/components/shared/GridPostList";
-import ImageExpander from "@/components/shared/ImageExpander";
 import Loader from "@/components/shared/Loader";
 import PostStats from "@/components/shared/PostStats";
 import { Button } from "@/components/ui/button";
@@ -13,8 +12,8 @@ const PostDetails = () => {
     const { id } = useParams();
     const { user } = useUserContext();
 
-    const { data: post, isPending } = useGetPostById(id || '');
-    const { data: userPosts, isPending: isUserPostLoading } = useGetUserPosts(
+    const { data: post, isLoading } = useGetPostById(id);
+    const { data: userPosts, isLoading: isUserPostLoading } = useGetUserPosts(
         post?.creator.$id
     );
     const { mutate: deletePost } = useDeletePost();
@@ -22,17 +21,11 @@ const PostDetails = () => {
     const relatedPosts = userPosts?.documents.filter(
         (userPost: { $id: string | undefined; }) => userPost.$id !== id
     );
-
+    // 
     const handleDeletePost = () => {
-        if (id) {
-            deletePost({ postId: id, imageId: post?.imageId });
-            navigate(-1);
-        } else {
-            // Handle the case where id is undefined
-            console.error("Cannot delete post without a valid id");
-        }
+        deletePost({ postId: id, imageId: post?.imageId });
+        navigate(-1);
     };
-
 
     return (
         <div className="post_details-container">
@@ -51,23 +44,15 @@ const PostDetails = () => {
                 </Button>
             </div>
 
-            {isPending || !post ? (
+            {isLoading || !post ? (
                 <Loader />
             ) : (
                 <div className="post_details-card">
-                    {/* <div className="flex justify-center items-center h-screen">
-                        <div className="w-1/2"> */}
-                    <div className="post_details-img">
-                        <ImageExpander imageUrl={post?.imageUrl}
-                        />
-                    </div>
-                    {/* </div>
-                    </div> */}
-                    {/* <img
+                    <img
                         src={post?.imageUrl}
                         alt="creator"
                         className="post_details-img"
-                    /> */}
+                    />
 
                     <div className="post_details-info">
                         <div className="flex-between w-full">
