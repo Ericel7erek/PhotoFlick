@@ -18,8 +18,8 @@ const PostDetails = () => {
     const { id } = useParams();
     const { user } = useUserContext();
 
-    const { data: post, isLoading } = useGetPostById(id);
-    const { data: userPosts, isLoading: isUserPostLoading } = useGetUserPosts(
+    const { data: post, isPending } = useGetPostById(id || '');
+    const { data: userPosts, isPending: isUserPostLoading } = useGetUserPosts(
         post?.creator.$id
     );
     const { mutate: deletePost } = useDeletePost();
@@ -29,9 +29,14 @@ const PostDetails = () => {
     );
 
     const handleDeletePost = () => {
-        deletePost({ postId: id, imageId: post?.imageId });
+        // Ensure that postId and imageId are of type string
+        const postIdToDelete: string = id || '';
+        const imageIdToDelete: string = post?.imageId || '';
+
+        deletePost({ postId: postIdToDelete, imageId: imageIdToDelete });
         navigate(-1);
     };
+
 
     return (
         <div className="post_details-container">
@@ -50,7 +55,7 @@ const PostDetails = () => {
                 </Button>
             </div>
 
-            {isLoading || !post ? (
+            {isPending || !post ? (
                 <Loader />
             ) : (
                 <div className="post_details-card">
