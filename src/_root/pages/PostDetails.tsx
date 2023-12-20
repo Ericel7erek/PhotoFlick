@@ -147,7 +147,7 @@ const PostDetails = () => {
                 {isUserPostLoading || !relatedPosts ? (
                     <Loader />
                 ) : (
-                    <GridPostList posts={relatedPosts} />
+                    <GridPostList posts={relatedPosts} showUser={false} showStats={false} />
                 )}
             </div>
         </div>
