@@ -54,7 +54,7 @@ const PostStats = ({ post, userId }: PostStatsProps) => {
             setIsSaved(false);
         } else {
             // If the post is not saved, save the post
-            savePost({ postId: post?.$id || '', userId: userId });
+            savePost({ userId: userId, postId: post?.$id || '' });
             setIsSaved(true);
         }
 

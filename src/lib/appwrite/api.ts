@@ -371,15 +371,15 @@ export async function likePost(postId: string, likesArray: string[]) {
 }
 
 // ============================== SAVE POST
-export async function savePost(userId: string, postId: string) {
+export async function savePost(postId: string, userId: string) {
   try {
     const updatedPost = await databases.createDocument(
       appwriteConfig.databaseId,
       appwriteConfig.savesCollectionId,
       ID.unique(),
       {
-        user: userId,
         post: postId,
+        user: userId,
       }
     );
 
