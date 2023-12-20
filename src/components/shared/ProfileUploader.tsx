@@ -1,5 +1,6 @@
 import { useCallback, useState } from "react";
 import { FileWithPath, useDropzone } from "react-dropzone";
+import EXIF from 'exif-js';
 
 import { convertFileToUrl } from "@/lib/utils";
 
@@ -16,10 +17,55 @@ const ProfileUploader = ({ fieldChange, mediaUrl }: ProfileUploaderProps) => {
         (acceptedFiles: FileWithPath[]) => {
             setFile(acceptedFiles);
             fieldChange(acceptedFiles);
-            setFileUrl(convertFileToUrl(acceptedFiles[0]));
+
+            const file = acceptedFiles[0];
+            const reader = new FileReader();
+
+            reader.onloadend = function () {
+                const exif = EXIF.readFromBinaryFile(new BinaryFile(reader.result));
+
+                // Create a temporary canvas to handle image transformation
+                const tempCanvas = document.createElement('canvas');
+                const tempCtx = tempCanvas.getContext('2d');
+
+                // Apply transformations based on exif.Orientation
+                switch (exif.Orientation) {
+                    case 2:
+                        tempCanvas.width = file.width;
+                        tempCanvas.height = file.height;
+                        tempCtx.translate(tempCanvas.width, 0);
+                        tempCtx.scale(-1, 1);
+                        break;
+                    case 3:
+                        tempCanvas.width = file.width;
+                        tempCanvas.height = file.height;
+                        tempCtx.translate(tempCanvas.width, tempCanvas.height);
+                        tempCtx.rotate(Math.PI);
+                        break;
+                    // Add cases for other orientations as needed
+                    default:
+                        // No transformation for other orientations
+                        tempCanvas.width = file.width;
+                        tempCanvas.height = file.height;
+                        break;
+                }
+
+                // Draw the image on the temporary canvas
+                tempCtx.drawImage(this.result, 0, 0);
+
+                // Convert the temporary canvas to a data URL
+                const transformedUrl = tempCanvas.toDataURL(file.type);
+
+                // Set the transformed URL
+                setFileUrl(transformedUrl);
+            };
+
+            // Read the file as a data URL
+            reader.readAsDataURL(file);
         },
         [file]
     );
+
 
     const { getRootProps, getInputProps } = useDropzone({
         onDrop,
