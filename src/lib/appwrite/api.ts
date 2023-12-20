@@ -182,8 +182,8 @@ export function getFilePreview(fileId: string) {
     const fileUrl = storage.getFilePreview(
       appwriteConfig.storageId,
       fileId,
-      3000,
-      3000,
+      2000,
+      2000,
       "top",
       100,
       0
