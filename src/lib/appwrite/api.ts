@@ -185,7 +185,8 @@ export function getFilePreview(fileId: string) {
       3000,
       3000,
       "top",
-      100
+      100,
+      0
     );
 
     if (!fileUrl) throw Error;

@@ -1,6 +1,6 @@
-import { useCallback, useState, useEffect } from "react";
+import { useCallback, useState } from "react";
 import { FileWithPath, useDropzone } from "react-dropzone";
-import EXIF from "exif-js"; // Import the exif-js library
+
 import { convertFileToUrl } from "@/lib/utils";
 
 type ProfileUploaderProps = {
@@ -20,63 +20,6 @@ const ProfileUploader = ({ fieldChange, mediaUrl }: ProfileUploaderProps) => {
         },
         [file]
     );
-
-    const handleOrientation = (file: File) => {
-        EXIF.getData(file, function () {
-            const orientation = EXIF.getTag(this, "Orientation");
-            if (orientation && orientation !== 1) {
-                // Image needs rotation, handle rotation here
-                const canvas = document.createElement("canvas");
-                const ctx = canvas.getContext("2d");
-                const img = new Image();
-
-                img.onload = function () {
-                    canvas.width = img.width;
-                    canvas.height = img.height;
-
-                    // Rotate image
-                    switch (orientation) {
-                        case 2:
-                            ctx?.transform(-1, 0, 0, 1, img.width, 0);
-                            break;
-                        case 3:
-                            ctx?.transform(-1, 0, 0, -1, img.width, img.height);
-                            break;
-                        case 4:
-                            ctx?.transform(1, 0, 0, -1, 0, img.height);
-                            break;
-                        case 5:
-                            ctx?.transform(0, 1, 1, 0, 0, 0);
-                            break;
-                        case 6:
-                            ctx?.transform(0, 1, -1, 0, img.height, 0);
-                            break;
-                        case 7:
-                            ctx?.transform(0, -1, -1, 0, img.height, img.width);
-                            break;
-                        case 8:
-                            ctx?.transform(0, -1, 1, 0, 0, img.width);
-                            break;
-                        default:
-                            break;
-                    }
-
-                    // Draw the image on the canvas
-                    ctx?.drawImage(img, 0, 0);
-                    const rotatedUrl = canvas.toDataURL("image/jpeg");
-                    setFileUrl(rotatedUrl);
-                };
-
-                img.src = URL.createObjectURL(file);
-            }
-        });
-    };
-
-    useEffect(() => {
-        if (file.length > 0) {
-            handleOrientation(file[0]);
-        }
-    }, [file]);
 
     const { getRootProps, getInputProps } = useDropzone({
         onDrop,
