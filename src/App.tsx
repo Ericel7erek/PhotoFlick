@@ -16,7 +16,7 @@ import Profile from './_root/pages/Profile';
 import UpdateProfile from './_root/pages/UpdateProfile';
 const App = () => {
     return (
-        <main className='flex h-screen overflow-scroll overscroll-contain'>
+        <main className='flex h-screen overflow-scroll overscroll-none'>
             <Routes>
                 {/* public routes */}
                 <Route element={<AuthLayout />}>

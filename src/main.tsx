@@ -5,7 +5,7 @@ import AuthProvider from "./context/AuthContext";
 import QueryProvider from "./lib/react-query/QueryProvider";
 
 ReactDOM.createRoot(document.getElementById("root")!).render(
-    <div className="overflow-scroll overscroll-contain">
+    <div className="overflow-scroll overscroll-none">
         <BrowserRouter>
             <QueryProvider>
                 <AuthProvider>
