@@ -17,6 +17,7 @@ const ProfileUploader = ({ fieldChange, mediaUrl }: ProfileUploaderProps) => {
         (acceptedFiles: FileWithPath[]) => {
             setFile(acceptedFiles);
             fieldChange(acceptedFiles);
+            // Passing the first accepted file directly to convertFileToUrl
             setFileUrl(convertFileToUrl(acceptedFiles[0]));
         },
         [fieldChange]
@@ -64,13 +65,23 @@ const ProfileUploader = ({ fieldChange, mediaUrl }: ProfileUploaderProps) => {
 };
 
 // Function to get image orientation using exif-js
+// Function to get image orientation using exif-js
 const getOrientation = async (file: File) => {
     return new Promise<number>((resolve) => {
-        EXIF.getData(file, function (this: HTMLImageElement) {
-            const orientation = EXIF.getTag(this, "Orientation");
-            resolve(orientation || 1);
-        });
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            if (e.target?.result) {
+                const image = new Image();
+                image.src = e.target.result.toString();
+                image.onload = function () {
+                    const orientation = EXIF.getTag(image, "Orientation");
+                    resolve(orientation || 1);
+                };
+            }
+        };
+        reader.readAsDataURL(file);
     });
 };
+
 
 export default ProfileUploader;
