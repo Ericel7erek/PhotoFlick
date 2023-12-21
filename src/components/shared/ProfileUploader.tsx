@@ -19,7 +19,7 @@ const ProfileUploader = ({ fieldChange, mediaUrl }: ProfileUploaderProps) => {
             fieldChange(acceptedFiles);
             setFileUrl(convertFileToUrl(acceptedFiles[0]));
         },
-        [file]
+        [fieldChange]
     );
 
     // Use effect to handle image orientation after drop
@@ -66,7 +66,7 @@ const ProfileUploader = ({ fieldChange, mediaUrl }: ProfileUploaderProps) => {
 // Function to get image orientation using exif-js
 const getOrientation = async (file: File) => {
     return new Promise<number>((resolve) => {
-        EXIF.getData(file, function () {
+        EXIF.getData(file, function (this: HTMLImageElement) {
             const orientation = EXIF.getTag(this, "Orientation");
             resolve(orientation || 1);
         });
