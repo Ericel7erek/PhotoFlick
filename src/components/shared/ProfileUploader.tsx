@@ -1,5 +1,6 @@
-import { useCallback, useState } from "react";
+import { useCallback, useState, useEffect } from "react";
 import { FileWithPath, useDropzone } from "react-dropzone";
+import EXIF from 'exif-js';
 
 import { convertFileToUrl } from "@/lib/utils";
 
@@ -20,6 +21,22 @@ const ProfileUploader = ({ fieldChange, mediaUrl }: ProfileUploaderProps) => {
         },
         [file]
     );
+
+    // Use effect to handle image orientation after drop
+    useEffect(() => {
+        const handleImageOrientation = async () => {
+            if (file.length > 0) {
+                const orientation = await getOrientation(file[0]);
+                if (orientation !== 1) {
+                    // If orientation is not normal (1), adjust the image
+                    // Implement your image adjustment logic here
+                    console.log(`Adjust image orientation: ${orientation}`);
+                }
+            }
+        };
+
+        handleImageOrientation();
+    }, [file]);
 
     const { getRootProps, getInputProps } = useDropzone({
         onDrop,
@@ -44,6 +61,16 @@ const ProfileUploader = ({ fieldChange, mediaUrl }: ProfileUploaderProps) => {
             </div>
         </div>
     );
+};
+
+// Function to get image orientation using exif-js
+const getOrientation = async (file: File) => {
+    return new Promise<number>((resolve) => {
+        EXIF.getData(file, function () {
+            const orientation = EXIF.getTag(this, "Orientation");
+            resolve(orientation || 1);
+        });
+    });
 };
 
 export default ProfileUploader;
