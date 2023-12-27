@@ -35,7 +35,7 @@ export const removeExifOrientation = async (
 
             // Remove the orientation tag
             const orientationTagOffset = offset + 8;
-            dv.setUint16(orientationTagOffset, 8, false); // Set to 8 for 270 degrees rotation
+            dv.setUint16(orientationTagOffset, 1, false); // Set to 1 for no rotation
 
             // Create a new File without the Exif orientation metadata
             const blob = new Blob([arrayBuffer], { type: file.type });
