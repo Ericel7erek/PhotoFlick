@@ -1,6 +1,9 @@
 import { useCallback, useState } from "react";
 import { FileWithPath, useDropzone } from "react-dropzone";
-import { convertFileToUrl, convertHeicOrHeifToJpeg } from "@/lib/utils";
+import { convertFileToUrl } from "@/lib/utils";
+
+// Import the removeExifOrientation function
+import { removeExifOrientation } from "@/lib/utils";
 
 type ProfileUploaderProps = {
     fieldChange: (files: File[]) => void;
@@ -11,30 +14,32 @@ const ProfileUploader = ({ fieldChange, mediaUrl }: ProfileUploaderProps) => {
     const [file, setFile] = useState<File[]>([]);
     const [fileUrl, setFileUrl] = useState<string>(mediaUrl);
 
+    // Function to handle Exif orientation before uploading
+    const handleUpload = async (file: File) => {
+        // Remove Exif orientation metadata before uploading
+        const fileWithoutExif = await removeExifOrientation(file);
+
+        // Now you can proceed with uploading fileWithoutExif
+        // Your actual upload logic goes here
+        // ...
+
+        // For now, let's log the modified file URL
+        console.log("File URL after removing Exif orientation:", convertFileToUrl(fileWithoutExif));
+    };
+
     const onDrop = useCallback(
         async (acceptedFiles: FileWithPath[]) => {
             const selectedFile = acceptedFiles[0];
 
-            try {
-                // Check if the file is HEIC or HEIF
-                if (selectedFile.type === 'image/heic' || selectedFile.type === 'image/heif') {
-                    // Convert HEIC/HEIF to JPEG and handle orientation
-                    const convertedFile = await convertHeicOrHeifToJpeg(selectedFile);
-                    setFile([convertedFile]);
-                    fieldChange([convertedFile]);
-                    setFileUrl(convertFileToUrl(convertedFile));
-                } else {
-                    // For other file types, proceed as before
-                    setFile(acceptedFiles);
-                    fieldChange(acceptedFiles);
-                    setFileUrl(convertFileToUrl(selectedFile));
-                }
-            } catch (error) {
-                // Handle conversion errors
-                console.error('Error handling file:', error);
-            }
+            // Handle Exif orientation before uploading
+            await handleUpload(selectedFile);
+
+            // Rest of your logic goes here
+            setFile(acceptedFiles);
+            fieldChange(acceptedFiles);
+            setFileUrl(convertFileToUrl(acceptedFiles[0]));
         },
-        [file]
+        [file, fieldChange]
     );
 
     const { getRootProps, getInputProps } = useDropzone({

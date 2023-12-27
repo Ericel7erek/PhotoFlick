@@ -1,35 +1,72 @@
 import { type ClassValue, clsx } from "clsx";
 import { twMerge } from "tailwind-merge";
-import heic2any from "heic2any";
-
-export const convertHeicOrHeifToJpeg = async (file: File): Promise<File> => {
-  try {
-    const blobs = await heic2any({
-      blob: file,
-      toType: "image/jpeg",
-      quality: 1, // Adjust the quality as needed
-    });
-
-    // If blobs is an array, create a new Blob from the array
-    const convertedBlob = Array.isArray(blobs)
-      ? new Blob(blobs, { type: "image/jpeg" })
-      : blobs;
-
-    // Create a new File object from the converted blob
-    const convertedFile = new File([convertedBlob], "converted.jpg", {
-      type: "image/jpeg",
-    });
-
-    return convertedFile;
-  } catch (error) {
-    console.error("Error converting HEIC/HEIF to JPEG:", error);
-    throw error;
-  }
-};
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
+
+// utils.js
+
+// Function to remove Exif orientation metadata from a File object
+export const removeExifOrientation = async (file: File): Promise<File> => {
+  return new Promise<File>((resolve) => {
+    const reader = new FileReader();
+
+    reader.onload = (e) => {
+      // Add null check for e.target
+      if (e.target) {
+        const arrayBuffer = e.target.result as ArrayBuffer;
+        const dv = new DataView(arrayBuffer);
+
+        // Rest of the code remains unchanged
+        // Check for the presence of Exif marker
+        if (dv.getUint16(0, false) !== 0xffd8) {
+          resolve(file); // No Exif data, no action needed
+          return;
+        }
+
+        let offset = 2;
+
+        while (offset < dv.byteLength) {
+          const marker = dv.getUint16(offset, false);
+          offset += 2;
+
+          if (marker === 0xffe1) {
+            // Found Exif marker
+            const length = dv.getUint16(offset, false);
+            offset += 2;
+
+            // Check for "Exif" string
+            if (dv.getUint32(offset, false) === 0x45786966) {
+              offset += 6; // Skip "Exif\0\0"
+
+              // Remove the orientation tag
+              const orientationTagOffset = offset + 8;
+              dv.setUint16(orientationTagOffset, 0, false);
+
+              // Create a new File without the Exif orientation metadata
+              const blob = new Blob([arrayBuffer], { type: file.type });
+              const newFile = new File([blob], file.name, { type: file.type });
+
+              resolve(newFile);
+              return;
+            }
+          } else if ((marker & 0xff00) !== 0xff00) {
+            break; // Not a valid marker
+          } else {
+            offset += dv.getUint16(offset, false);
+          }
+        }
+
+        resolve(file); // No Exif data found or invalid structure
+      }
+    };
+
+    reader.readAsArrayBuffer(file);
+  });
+};
+
+// Other utility functions can be added to this module as needed
 
 export const convertFileToUrl = (file: File) => URL.createObjectURL(file);
 
