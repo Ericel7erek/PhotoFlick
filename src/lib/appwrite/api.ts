@@ -1,7 +1,7 @@
 import { ID, Query } from "appwrite";
-
 import { appwriteConfig, account, databases, storage, avatars } from "./config";
 import { IUpdatePost, INewPost, INewUser, IUpdateUser } from "@/types";
+import { removeExifOrientation } from "../utils";
 
 // ============================================================
 // AUTH
@@ -161,13 +161,17 @@ export async function createPost(post: INewPost) {
   }
 }
 
-// ============================== UPLOAD FILE
+// ============================== UPLOAD FILE// ============================== UPLOAD FILE
 export async function uploadFile(file: File) {
   try {
+    // Remove Exif orientation from the file
+    const fileWithoutExif = await removeExifOrientation(file);
+
+    // Upload the file without Exif orientation to appwrite storage
     const uploadedFile = await storage.createFile(
       appwriteConfig.storageId,
       ID.unique(),
-      file
+      fileWithoutExif
     );
 
     return uploadedFile;
