@@ -1,5 +1,31 @@
 import { type ClassValue, clsx } from "clsx";
 import { twMerge } from "tailwind-merge";
+import heic2any from "heic2any";
+
+export const convertHeicOrHeifToJpeg = async (file: File): Promise<File> => {
+  try {
+    const blobs = await heic2any({
+      blob: file,
+      toType: "image/jpeg",
+      quality: 1, // Adjust the quality as needed
+    });
+
+    // If blobs is an array, create a new Blob from the array
+    const convertedBlob = Array.isArray(blobs)
+      ? new Blob(blobs, { type: "image/jpeg" })
+      : blobs;
+
+    // Create a new File object from the converted blob
+    const convertedFile = new File([convertedBlob], "converted.jpg", {
+      type: "image/jpeg",
+    });
+
+    return convertedFile;
+  } catch (error) {
+    console.error("Error converting HEIC/HEIF to JPEG:", error);
+    throw error;
+  }
+};
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
