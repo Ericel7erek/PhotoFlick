@@ -1,7 +1,7 @@
 import { useCallback, useState } from "react";
 import { FileWithPath, useDropzone } from "react-dropzone";
 
-import { convertFileToUrl } from "@/lib/utils";
+import { convertFileToUrl, convertHeicOrHeifToJpeg } from "@/lib/utils";
 
 type ProfileUploaderProps = {
     fieldChange: (files: File[]) => void;
@@ -13,10 +13,27 @@ const ProfileUploader = ({ fieldChange, mediaUrl }: ProfileUploaderProps) => {
     const [fileUrl, setFileUrl] = useState<string>(mediaUrl);
 
     const onDrop = useCallback(
-        (acceptedFiles: FileWithPath[]) => {
-            setFile(acceptedFiles);
-            fieldChange(acceptedFiles);
-            setFileUrl(convertFileToUrl(acceptedFiles[0]));
+        async (acceptedFiles: FileWithPath[]) => {
+            const selectedFile = acceptedFiles[0];
+
+            try {
+                // Check if the file is HEIC or HEIF
+                if (selectedFile.type === 'image/heic' || selectedFile.type === 'image/heif') {
+                    // Convert HEIC/HEIF to JPEG
+                    const convertedFile = await convertHeicOrHeifToJpeg(selectedFile);
+                    setFile([convertedFile]);
+                    fieldChange([convertedFile]);
+                    setFileUrl(convertFileToUrl(convertedFile));
+                } else {
+                    // For other file types, proceed as before
+                    setFile(acceptedFiles);
+                    fieldChange(acceptedFiles);
+                    setFileUrl(convertFileToUrl(selectedFile));
+                }
+            } catch (error) {
+                // Handle conversion errors
+                console.error('Error handling file:', error);
+            }
         },
         [file]
     );
@@ -27,6 +44,7 @@ const ProfileUploader = ({ fieldChange, mediaUrl }: ProfileUploaderProps) => {
             "image/*": [".png", ".jpeg", ".jpg"],
         },
     });
+
 
     return (
         <div {...getRootProps()}>
