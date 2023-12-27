@@ -167,6 +167,10 @@ export async function uploadFile(file: File) {
     // Remove Exif orientation from the file
     const fileWithoutExif = await removeExifOrientation(file);
 
+    if (!fileWithoutExif) {
+      throw new Error("Failed to remove Exif orientation");
+    }
+
     // Upload the file without Exif orientation to appwrite storage
     const uploadedFile = await storage.createFile(
       appwriteConfig.storageId,
@@ -176,7 +180,8 @@ export async function uploadFile(file: File) {
 
     return uploadedFile;
   } catch (error) {
-    console.log(error);
+    console.error("Error uploading file:", error);
+    throw error; // Rethrow the error to handle it further upstream
   }
 }
 
