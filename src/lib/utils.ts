@@ -33,24 +33,17 @@ export const removeExifOrientation = async (file: File): Promise<File> => {
 
           if (marker === 0xffe1) {
             // Found Exif marker
-            const length = dv.getUint16(offset, false);
-            offset += 2;
 
-            // Check for "Exif" string
-            if (dv.getUint32(offset, false) === 0x45786966) {
-              offset += 6; // Skip "Exif\0\0"
+            // Remove the orientation tag
+            const orientationTagOffset = offset + 8;
+            dv.setUint16(orientationTagOffset, 0, false);
 
-              // Remove the orientation tag
-              const orientationTagOffset = offset + 8;
-              dv.setUint16(orientationTagOffset, 0, false);
+            // Create a new File without the Exif orientation metadata
+            const blob = new Blob([arrayBuffer], { type: file.type });
+            const newFile = new File([blob], file.name, { type: file.type });
 
-              // Create a new File without the Exif orientation metadata
-              const blob = new Blob([arrayBuffer], { type: file.type });
-              const newFile = new File([blob], file.name, { type: file.type });
-
-              resolve(newFile);
-              return;
-            }
+            resolve(newFile);
+            return;
           } else if ((marker & 0xff00) !== 0xff00) {
             break; // Not a valid marker
           } else {
