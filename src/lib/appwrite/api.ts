@@ -1,5 +1,5 @@
 import { ID, Query } from "appwrite";
-import EXIF from "exif-js";
+// import EXIF from "exif-js";
 import { appwriteConfig, account, databases, storage, avatars } from "./config";
 import { IUpdatePost, INewPost, INewUser, IUpdateUser } from "@/types";
 
@@ -162,103 +162,19 @@ export async function createPost(post: INewPost) {
 }
 
 // ============================== UPLOAD FILE
-async function readExifData(originalFile: File): Promise<any> {
-  return new Promise<any>((resolve) => {
-    const reader = new FileReader();
-    reader.onloadend = () =>
-      resolve(EXIF.readFromBinaryFile(reader.result as ArrayBuffer));
-    reader.readAsArrayBuffer(originalFile);
-  });
-}
-
-async function rotateImage(
-  image: HTMLImageElement,
-  orientation: number
-): Promise<string> {
-  return new Promise<string>((resolve, reject) => {
-    const canvas = document.createElement("canvas");
-    const ctx = canvas.getContext("2d");
-
-    if (!ctx) {
-      reject(new Error("Unable to get 2D context"));
-      return;
-    }
-
-    const width = orientation && orientation > 4 ? image.height : image.width;
-    const height = orientation && orientation > 4 ? image.width : image.height;
-
-    canvas.width = width;
-    canvas.height = height;
-
-    switch (orientation) {
-      case 2:
-        ctx.transform(-1, 0, 0, 1, width, 0);
-        break;
-      case 3:
-        ctx.transform(-1, 0, 0, -1, width, height);
-        break;
-      case 4:
-        ctx.transform(1, 0, 0, -1, 0, height);
-        break;
-      case 5:
-        ctx.transform(0, 1, 1, 0, 0, 0);
-        break;
-      case 6:
-        ctx.transform(0, 1, -1, 0, height, 0);
-        break;
-      case 7:
-        ctx.transform(0, -1, -1, 0, height, width);
-        break;
-      case 8:
-        ctx.transform(0, -1, 1, 0, 0, width);
-        break;
-    }
-
-    ctx.drawImage(image, 0, 0);
-
-    canvas.toBlob((blob) => {
-      if (blob) {
-        const blobUrl = URL.createObjectURL(blob);
-        resolve(blobUrl);
-      } else {
-        reject(new Error("Error creating Blob from rotated image."));
-      }
-    }, "image/jpeg");
-  });
-}
-
-export async function uploadFile(originalFile: File) {
+export async function uploadFile(file: File) {
   try {
-    const exifData = await readExifData(originalFile);
-    const orientation = exifData && exifData.Orientation;
-
-    const imageElement = new Image();
-    imageElement.src = URL.createObjectURL(originalFile);
-
-    const rotatedImage = await rotateImage(imageElement, orientation);
-
-    const rotatedBlob = await fetch(rotatedImage).then((res) => res.blob());
-
-    if (!rotatedBlob) {
-      throw new Error("Error creating Blob from rotated image.");
-    }
-
-    const rotatedFile = new File([rotatedBlob], "rotated_image.jpg", {
-      type: "image/jpeg",
-    });
-
     const uploadedFile = await storage.createFile(
       appwriteConfig.storageId,
       ID.unique(),
-      rotatedFile
+      file
     );
 
     return uploadedFile;
   } catch (error) {
-    console.error(error);
+    console.log(error);
   }
 }
-
 // ============================== GET FILE URL
 export function getFilePreview(fileId: string) {
   try {
