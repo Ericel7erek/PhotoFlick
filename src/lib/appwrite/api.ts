@@ -164,11 +164,14 @@ export async function createPost(post: INewPost) {
 // ============================== UPLOAD FILE
 export async function uploadFile(originalFile: File) {
   try {
+    // Read EXIF data
     const exifData = await readExifData(originalFile);
+
+    // Get orientation from EXIF data
     const orientation = exifData && exifData.Orientation;
 
-    const imageElement = new Image();
-    imageElement.src = URL.createObjectURL(originalFile);
+    // Create an image element
+    const imageElement = await createImageElement(originalFile);
 
     // Rotate image if necessary
     const rotatedImage = await rotateImage(imageElement, orientation);
@@ -198,23 +201,35 @@ export async function uploadFile(originalFile: File) {
   }
 }
 
-async function readExifData(file: File): Promise<any> {
-  return new Promise((resolve) => {
-    const reader = new FileReader();
+async function readExifData(originalFile: File): Promise<any> {
+  const reader = new FileReader();
+
+  return new Promise<any>((resolve) => {
     reader.onloadend = () => {
       resolve(EXIF.readFromBinaryFile(reader.result as ArrayBuffer));
     };
-    reader.readAsArrayBuffer(file);
+
+    reader.readAsArrayBuffer(originalFile);
   });
 }
 
-// Rest of your rotateImage function remains unchanged
+async function createImageElement(
+  originalFile: File
+): Promise<HTMLImageElement> {
+  return new Promise<HTMLImageElement>((resolve) => {
+    const imageElement = new Image();
+    imageElement.onload = () => {
+      resolve(imageElement);
+    };
+    imageElement.src = URL.createObjectURL(originalFile);
+  });
+}
 
 async function rotateImage(
   image: HTMLImageElement,
   orientation: number
 ): Promise<string> {
-  return new Promise<string>(async (resolve, reject) => {
+  return new Promise<string>((resolve, reject) => {
     const canvas = document.createElement("canvas");
     const ctx = canvas.getContext("2d");
 
@@ -222,13 +237,6 @@ async function rotateImage(
       reject(new Error("Unable to get 2D context"));
       return;
     }
-
-    // Wait for the image to load
-    await new Promise<void>((imageLoadResolve) => {
-      image.onload = () => {
-        imageLoadResolve();
-      };
-    });
 
     // Set canvas dimensions based on image orientation
     if (orientation && orientation > 4) {
@@ -272,7 +280,6 @@ async function rotateImage(
     // Create Blob from canvas
     canvas.toBlob((blob) => {
       if (blob) {
-        // Create a URL for the Blob
         const blobUrl = URL.createObjectURL(blob);
         resolve(blobUrl);
       } else {
