@@ -181,7 +181,7 @@ async function createImageElement(
   });
 }
 
-async function rotateImage(
+function rotateImage(
   image: HTMLImageElement,
   orientation: number
 ): Promise<string> {
@@ -194,10 +194,9 @@ async function rotateImage(
       return;
     }
 
-    const [width, height] =
-      orientation && orientation > 4
-        ? [image.height, image.width]
-        : [image.width, image.height];
+    const width = orientation && orientation > 4 ? image.height : image.width;
+    const height = orientation && orientation > 4 ? image.width : image.height;
+
     canvas.width = width;
     canvas.height = height;
 
@@ -229,7 +228,8 @@ async function rotateImage(
 
     canvas.toBlob((blob) => {
       if (blob) {
-        resolve(URL.createObjectURL(blob));
+        const blobUrl = URL.createObjectURL(blob);
+        resolve(blobUrl);
       } else {
         reject(new Error("Error creating Blob from rotated image."));
       }
@@ -240,7 +240,7 @@ async function rotateImage(
 export async function uploadFile(originalFile: File) {
   try {
     const exifData = await readExifData(originalFile);
-    const orientation = exifData?.Orientation;
+    const orientation = exifData && exifData.Orientation;
 
     const imageElement = await createImageElement(originalFile);
     const rotatedImage = await rotateImage(imageElement, orientation);
