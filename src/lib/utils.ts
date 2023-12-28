@@ -5,61 +5,6 @@ export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
 
-export const removeExifOrientation = async (
-  file: File
-): Promise<File | null> => {
-  return new Promise<File | null>((resolve) => {
-    const reader = new FileReader();
-
-    reader.onload = (e) => {
-      if (e.target) {
-        const arrayBuffer = e.target.result as ArrayBuffer;
-        const dv = new DataView(arrayBuffer);
-
-        // Check for the presence of Exif marker
-        if (dv.getUint16(0, false) !== 0xffd8) {
-          resolve(file); // No Exif data, no action needed
-          return;
-        }
-
-        let offset = 2;
-
-        while (offset < dv.byteLength) {
-          const marker = dv.getUint16(offset, false);
-          offset += 2;
-
-          if (marker === 0xffe1) {
-            // Found Exif marker
-            offset += 2; // Skip the length field
-            offset += 6; // Skip "Exif\0\0"
-
-            // Remove the orientation tag
-            const orientationTagOffset = offset + 8;
-            dv.setUint16(orientationTagOffset, 1, false); // Set to 1 for no rotation
-
-            // Create a new File without the Exif orientation metadata
-            const blob = new Blob([arrayBuffer], { type: file.type });
-            const newFile = new File([blob], file.name, { type: file.type });
-
-            resolve(newFile);
-            return;
-          } else if ((marker & 0xff00) !== 0xff00) {
-            break; // Not a valid marker
-          } else {
-            offset += dv.getUint16(offset, false);
-          }
-        }
-
-        resolve(file); // No Exif data found or invalid structure
-      }
-
-      resolve(null); // Failed to read file data
-    };
-
-    reader.readAsArrayBuffer(file);
-  });
-};
-
 export const convertFileToUrl = (file: File) => URL.createObjectURL(file);
 
 export function formatDateString(dateString: string) {

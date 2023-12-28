@@ -1,7 +1,7 @@
 import { ID, Query } from "appwrite";
+import EXIF from "exif-js";
 import { appwriteConfig, account, databases, storage, avatars } from "./config";
 import { IUpdatePost, INewPost, INewUser, IUpdateUser } from "@/types";
-import { removeExifOrientation } from "../utils";
 
 // ============================================================
 // AUTH
@@ -161,28 +161,126 @@ export async function createPost(post: INewPost) {
   }
 }
 
-// ============================== UPLOAD FILE// ============================== UPLOAD FILE
-export async function uploadFile(file: File) {
+// ============================== UPLOAD FILE
+export async function uploadFile(originalFile: File) {
   try {
-    // Remove Exif orientation from the file
-    const fileWithoutExif = await removeExifOrientation(file);
+    // Read EXIF data
+    const reader = new FileReader();
+    reader.readAsArrayBuffer(originalFile);
+    await new Promise((resolve) => {
+      reader.onloadend = () => {
+        resolve("Operation Succeeded");
+      };
+    });
 
-    if (!fileWithoutExif) {
-      throw new Error("Failed to remove Exif orientation");
+    // Use exif-js to read EXIF data
+    const exifData = EXIF.readFromBinaryFile(reader.result as ArrayBuffer);
+
+    // Get orientation from EXIF data
+    const orientation =
+      exifData && exifData.Orientation ? exifData.Orientation : undefined;
+
+    const imageElement = new Image();
+    imageElement.src = URL.createObjectURL(originalFile);
+
+    // Rotate image if necessary
+    const rotatedImage = await rotateImage(imageElement, orientation);
+
+    // Convert rotatedImage to Blob
+    const rotatedBlob = await fetch(rotatedImage).then((res) => res.blob());
+
+    if (!rotatedBlob) {
+      throw new Error("Error creating Blob from rotated image.");
     }
 
-    // Upload the file without Exif orientation to appwrite storage
+    // Convert rotatedBlob to File
+    const rotatedFile = new File([rotatedBlob], "rotated_image.jpg", {
+      type: "image/jpeg",
+    });
+
+    // Upload rotated image to storage
     const uploadedFile = await storage.createFile(
       appwriteConfig.storageId,
       ID.unique(),
-      fileWithoutExif
+      rotatedFile
     );
 
     return uploadedFile;
   } catch (error) {
-    console.error("Error uploading file:", error);
-    throw error; // Rethrow the error to handle it further upstream
+    console.error(error);
   }
+}
+
+async function rotateImage(
+  image: HTMLImageElement,
+  orientation: number
+): Promise<string> {
+  return new Promise<string>(async (resolve, reject) => {
+    const canvas = document.createElement("canvas");
+    const ctx = canvas.getContext("2d");
+
+    if (!ctx) {
+      reject(new Error("Unable to get 2D context"));
+      return;
+    }
+
+    // Wait for the image to load
+    await new Promise<void>((imageLoadResolve) => {
+      image.onload = () => {
+        imageLoadResolve();
+      };
+    });
+
+    // Set canvas dimensions based on image orientation
+    if (orientation && orientation > 4) {
+      canvas.width = image.height;
+      canvas.height = image.width;
+    } else {
+      canvas.width = image.width;
+      canvas.height = image.height;
+    }
+
+    // Apply orientation transformation
+    switch (orientation) {
+      case 2:
+        ctx.transform(-1, 0, 0, 1, canvas.width, 0);
+        break;
+      case 3:
+        ctx.transform(-1, 0, 0, -1, canvas.width, canvas.height);
+        break;
+      case 4:
+        ctx.transform(1, 0, 0, -1, 0, canvas.height);
+        break;
+      case 5:
+        ctx.transform(0, 1, 1, 0, 0, 0);
+        break;
+      case 6:
+        ctx.transform(0, 1, -1, 0, canvas.height, 0);
+        break;
+      case 7:
+        ctx.transform(0, -1, -1, 0, canvas.height, canvas.width);
+        break;
+      case 8:
+        ctx.transform(0, -1, 1, 0, 0, canvas.width);
+        break;
+      default:
+        break;
+    }
+
+    // Draw the image onto the canvas
+    ctx.drawImage(image, 0, 0);
+
+    // Create Blob from canvas
+    canvas.toBlob((blob) => {
+      if (blob) {
+        // Create a URL for the Blob
+        const blobUrl = URL.createObjectURL(blob);
+        resolve(blobUrl);
+      } else {
+        reject(new Error("Error creating Blob from rotated image."));
+      }
+    }, "image/jpeg");
+  });
 }
 
 // ============================== GET FILE URL
@@ -506,7 +604,7 @@ export async function updateUser(user: IUpdateUser) {
     };
 
     if (hasFileToUpdate) {
-      // Upload new file to appwrite storage
+      // Upload new file to appwrite storage with EXIF data handling
       const uploadedFile = await uploadFile(user.file[0]);
       if (!uploadedFile) throw Error;
 
