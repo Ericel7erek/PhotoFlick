@@ -164,21 +164,8 @@ export async function createPost(post: INewPost) {
 // ============================== UPLOAD FILE
 export async function uploadFile(originalFile: File) {
   try {
-    // Read EXIF data
-    const reader = new FileReader();
-    reader.readAsArrayBuffer(originalFile);
-    await new Promise((resolve) => {
-      reader.onloadend = () => {
-        resolve("Operation Succeeded");
-      };
-    });
-
-    // Use exif-js to read EXIF data
-    const exifData = EXIF.readFromBinaryFile(reader.result as ArrayBuffer);
-
-    // Get orientation from EXIF data
-    const orientation =
-      exifData && exifData.Orientation ? exifData.Orientation : undefined;
+    const exifData = await readExifData(originalFile);
+    const orientation = exifData && exifData.Orientation;
 
     const imageElement = new Image();
     imageElement.src = URL.createObjectURL(originalFile);
@@ -210,6 +197,18 @@ export async function uploadFile(originalFile: File) {
     console.error(error);
   }
 }
+
+async function readExifData(file: File): Promise<any> {
+  return new Promise((resolve) => {
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      resolve(EXIF.readFromBinaryFile(reader.result as ArrayBuffer));
+    };
+    reader.readAsArrayBuffer(file);
+  });
+}
+
+// Rest of your rotateImage function remains unchanged
 
 async function rotateImage(
   image: HTMLImageElement,
