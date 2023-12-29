@@ -5,62 +5,92 @@ export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
 export async function rotateImage(
-  image: HTMLImageElement,
+  image: Blob | HTMLImageElement,
   orientation: number
 ): Promise<string> {
-  const canvas = document.createElement("canvas");
-  const ctx = canvas.getContext("2d");
+  return new Promise<string>((resolve, reject) => {
+    const imageElement = image instanceof Blob ? new Image() : image;
 
-  if (!ctx) {
-    throw new Error("Unable to get 2D context");
-  }
+    if (image instanceof Blob) {
+      imageElement.onload = () => {
+        processImage();
+      };
 
-  let width = image.width;
-  let height = image.height;
+      imageElement.onerror = (error) => {
+        reject(error);
+      };
 
-  // Adjust width and height based on orientation
-  if (orientation && orientation >= 5) {
-    [width, height] = [height, width];
-  }
+      imageElement.src = URL.createObjectURL(image);
+    } else {
+      processImage();
+    }
 
-  canvas.width = width;
-  canvas.height = height;
+    function processImage() {
+      const canvas = document.createElement("canvas");
+      const ctx = canvas.getContext("2d");
 
-  // Clear the canvas to avoid rendering issues
-  ctx.clearRect(0, 0, width, height);
+      if (!ctx) {
+        reject(new Error("Unable to get 2D context"));
+        return;
+      }
 
-  // Apply rotation based on orientation
-  switch (orientation) {
-    case 2:
-      ctx.transform(-1, 0, 0, 1, width, 0);
-      break;
-    case 3:
-      ctx.transform(-1, 0, 0, -1, width, height);
-      break;
-    case 4:
-      ctx.transform(1, 0, 0, -1, 0, height);
-      break;
-    case 5:
-      ctx.transform(0, 1, 1, 0, 0, 0);
-      break;
-    case 6:
-      ctx.transform(0, 1, -1, 0, height, 0);
-      break;
-    case 7:
-      ctx.transform(0, -1, -1, 0, height, width);
-      break;
-    case 8:
-      ctx.transform(0, -1, 1, 0, 0, width);
-      break;
-  }
+      let width = imageElement.width;
+      let height = imageElement.height;
 
-  // Draw the rotated image
-  ctx.drawImage(image, 0, 0, width, height);
+      // Adjust width and height based on orientation
+      if (orientation && orientation >= 5) {
+        [width, height] = [height, width];
+      }
 
-  // Convert the canvas to a data URL
-  const rotatedImageUrl = canvas.toDataURL("image/jpeg");
+      canvas.width = width;
+      canvas.height = height;
 
-  return rotatedImageUrl;
+      // Clear the canvas to avoid rendering issues
+      ctx.clearRect(0, 0, width, height);
+
+      // Apply rotation based on orientation
+      switch (orientation) {
+        case 2:
+          ctx.transform(-1, 0, 0, 1, width, 0);
+          break;
+        case 3:
+          ctx.transform(-1, 0, 0, -1, width, height);
+          break;
+        case 4:
+          ctx.transform(1, 0, 0, -1, 0, height);
+          break;
+        case 5:
+          ctx.transform(0, 1, 1, 0, 0, 0);
+          break;
+        case 6:
+          ctx.transform(0, 1, -1, 0, height, 0);
+          break;
+        case 7:
+          ctx.transform(0, -1, -1, 0, height, width);
+          break;
+        case 8:
+          ctx.transform(0, -1, 1, 0, 0, width);
+          break;
+      }
+
+      // Draw the rotated image
+      ctx.drawImage(imageElement, 0, 0, width, height);
+
+      // Convert the canvas to a blob and resolve the URL
+      canvas.toBlob(
+        (blob) => {
+          if (blob) {
+            const blobUrl = URL.createObjectURL(blob);
+            resolve(blobUrl);
+          } else {
+            reject(new Error("Error creating Blob from rotated image."));
+          }
+        },
+        "image/jpeg",
+        1 // Adjust quality if needed
+      );
+    }
+  });
 }
 
 export async function readExifData(originalFile: File): Promise<any> {
