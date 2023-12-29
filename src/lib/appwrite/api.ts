@@ -168,6 +168,7 @@ export async function uploadFile(file: File) {
     // Remove EXIF data
     const fileWithoutExif = await removeExifData(file);
 
+    // Upload the file without EXIF data
     const uploadedFile = await storage.createFile(
       appwriteConfig.storageId,
       ID.unique(),
@@ -181,7 +182,7 @@ export async function uploadFile(file: File) {
 }
 
 async function removeExifData(originalFile: File): Promise<File> {
-  return new Promise<File>((resolve) => {
+  return new Promise<File>((resolve, reject) => {
     const reader = new FileReader();
 
     reader.onloadend = () => {
@@ -211,7 +212,7 @@ async function removeExifData(originalFile: File): Promise<File> {
         resolve(fileWithoutExif);
       } catch (error) {
         console.error("Error removing EXIF data:", error);
-        resolve(originalFile);
+        reject(error);
       }
     };
 
