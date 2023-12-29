@@ -185,16 +185,34 @@ async function removeExifData(originalFile: File): Promise<File> {
     const reader = new FileReader();
 
     reader.onloadend = () => {
-      // Create a new Blob without the EXIF data
-      const fileWithoutExif = new File(
-        [reader.result as ArrayBuffer],
-        originalFile.name,
-        {
-          type: originalFile.type,
-        }
-      );
+      try {
+        const buffer = reader.result as ArrayBuffer;
+        const dataView = new DataView(buffer);
 
-      resolve(fileWithoutExif);
+        // Identify the start of the image data (usually after the EXIF header)
+        let offset = 0;
+        const marker = 0xffd8; // JPEG marker
+        while (offset < dataView.byteLength) {
+          if (dataView.getUint16(offset) === marker) {
+            break;
+          }
+          offset++;
+        }
+
+        // Create a new Blob without the EXIF data
+        const fileWithoutExif = new File(
+          [buffer.slice(offset)],
+          originalFile.name,
+          {
+            type: originalFile.type,
+          }
+        );
+
+        resolve(fileWithoutExif);
+      } catch (error) {
+        console.error("Error removing EXIF data:", error);
+        resolve(originalFile);
+      }
     };
 
     reader.readAsArrayBuffer(originalFile);
