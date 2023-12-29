@@ -17,8 +17,21 @@ export async function rotateImage(
       return;
     }
 
-    const width = orientation && orientation > 4 ? image.height : image.width;
-    const height = orientation && orientation > 4 ? image.width : image.height;
+    let width = image.width;
+    let height = image.height;
+
+    // Adjust width and height for mobile devices
+    if (window.innerWidth < window.innerHeight) {
+      // Portrait orientation
+      if (orientation && orientation >= 5) {
+        [width, height] = [height, width];
+      }
+    } else {
+      // Landscape orientation
+      if (orientation && orientation < 5) {
+        [width, height] = [height, width];
+      }
+    }
 
     canvas.width = width;
     canvas.height = height;
@@ -47,7 +60,7 @@ export async function rotateImage(
         break;
     }
 
-    ctx.drawImage(image, 0, 0);
+    ctx.drawImage(image, 0, 0, width, height);
 
     canvas.toBlob((blob) => {
       if (blob) {
