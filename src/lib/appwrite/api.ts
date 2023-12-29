@@ -1,5 +1,6 @@
 import { ID, Query } from "appwrite";
 // import EXIF from "exif-js";
+import { rotateImage, readExifData } from "@/lib/utils";
 import { appwriteConfig, account, databases, storage, avatars } from "./config";
 import { IUpdatePost, INewPost, INewUser, IUpdateUser } from "@/types";
 
@@ -162,19 +163,46 @@ export async function createPost(post: INewPost) {
 }
 
 // ============================== UPLOAD FILE
-export async function uploadFile(file: File) {
+export async function uploadFile(file: File, handleOrientation = true) {
   try {
+    const processFile = async (inputFile: any) => {
+      if (handleOrientation) {
+        const exifData = await readExifData(inputFile);
+        const orientation = exifData && exifData.Orientation;
+
+        const imageElement = new Image();
+        imageElement.src = URL.createObjectURL(inputFile);
+
+        const rotatedImage = await rotateImage(imageElement, orientation);
+
+        const rotatedBlob = await fetch(rotatedImage).then((res) => res.blob());
+
+        if (!rotatedBlob) {
+          throw new Error("Error creating Blob from rotated image.");
+        }
+
+        return new File([rotatedBlob], "rotated_image.jpg", {
+          type: "image/jpeg",
+        });
+      } else {
+        return inputFile;
+      }
+    };
+
+    const processedFile = await processFile(file);
+
     const uploadedFile = await storage.createFile(
       appwriteConfig.storageId,
       ID.unique(),
-      file
+      processedFile
     );
 
     return uploadedFile;
   } catch (error) {
-    console.log(error);
+    console.error(error);
   }
 }
+
 // ============================== GET FILE URL
 export function getFilePreview(fileId: string) {
   try {
