@@ -165,8 +165,23 @@ export async function createPost(post: INewPost) {
 // ============================== UPLOAD FILE
 export async function uploadFile(file: File) {
   try {
-    // Remove EXIF data
-    const fileWithoutExif = await removeExifData(file);
+    // Read the entire file as an ArrayBuffer
+    const buffer = await readFileAsArrayBuffer(file);
+
+    // Identify the start of the image data (usually after the EXIF header)
+    let offset = 0;
+    const marker = 0xffd8; // JPEG marker
+    while (offset < buffer.byteLength) {
+      if (new DataView(buffer).getUint16(offset) === marker) {
+        break;
+      }
+      offset++;
+    }
+
+    // Create a new Blob without the EXIF data
+    const fileWithoutExif = new File([buffer.slice(offset)], file.name, {
+      type: file.type,
+    });
 
     // Upload the file without EXIF data
     const uploadedFile = await storage.createFile(
@@ -181,42 +196,19 @@ export async function uploadFile(file: File) {
   }
 }
 
-async function removeExifData(originalFile: File): Promise<File> {
-  return new Promise<File>((resolve, reject) => {
+async function readFileAsArrayBuffer(file: File): Promise<ArrayBuffer> {
+  return new Promise<ArrayBuffer>((resolve, reject) => {
     const reader = new FileReader();
 
     reader.onloadend = () => {
-      try {
-        const buffer = reader.result as ArrayBuffer;
-        const dataView = new DataView(buffer);
-
-        // Identify the start of the image data (usually after the EXIF header)
-        let offset = 0;
-        const marker = 0xffd8; // JPEG marker
-        while (offset < dataView.byteLength) {
-          if (dataView.getUint16(offset) === marker) {
-            break;
-          }
-          offset++;
-        }
-
-        // Create a new Blob without the EXIF data
-        const fileWithoutExif = new File(
-          [buffer.slice(offset)],
-          originalFile.name,
-          {
-            type: originalFile.type,
-          }
-        );
-
-        resolve(fileWithoutExif);
-      } catch (error) {
-        console.error("Error removing EXIF data:", error);
-        reject(error);
+      if (reader.result instanceof ArrayBuffer) {
+        resolve(reader.result);
+      } else {
+        reject(new Error("Error reading file as ArrayBuffer."));
       }
     };
 
-    reader.readAsArrayBuffer(originalFile);
+    reader.readAsArrayBuffer(file);
   });
 }
 
