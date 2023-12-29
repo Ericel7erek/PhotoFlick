@@ -171,13 +171,17 @@ export async function uploadFile(file: File, handleOrientation = true) {
       if (handleOrientation) {
         // Read Exif data using ExifReader
         const exifData = await readExif(inputFile);
+        console.log("Exif Data:", exifData);
+
         const orientation = exifData && exifData.Orientation;
+        console.log("Orientation:", orientation);
 
         // Adjust file if necessary based on Exif data
         const adjustedFile = await adjustFileBasedOnExif(
           inputFile,
           orientation
         );
+        console.log("Adjusted File:", adjustedFile);
 
         // Upload the adjusted file
         const uploadedFile = await storage.createFile(
@@ -185,6 +189,7 @@ export async function uploadFile(file: File, handleOrientation = true) {
           ID.unique(),
           adjustedFile
         );
+        console.log("Uploaded File:", uploadedFile);
 
         return uploadedFile;
       } else {
@@ -194,6 +199,7 @@ export async function uploadFile(file: File, handleOrientation = true) {
           ID.unique(),
           inputFile
         );
+        console.log("Uploaded Original File:", uploadedFile);
 
         return uploadedFile;
       }
