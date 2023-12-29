@@ -1,4 +1,5 @@
 import { ID, Query } from "appwrite";
+import { remove as removeExif } from "piexif";
 // import EXIF from "exif-js";
 // import { rotateImage, readExifData } from "@/lib/utils";
 import { appwriteConfig, account, databases, storage, avatars } from "./config";
@@ -163,31 +164,19 @@ export async function createPost(post: INewPost) {
 }
 
 // ============================== UPLOAD FILE
+
 export async function uploadFile(file: File) {
   try {
-    // Read the entire file as an ArrayBuffer
-    const buffer = await readFileAsArrayBuffer(file);
+    const fileWithoutExif = removeExif(await readFileAsBase64(file));
 
-    // Identify the start of the image data (usually after the EXIF header)
-    let offset = 0;
-    const marker = 0xffd8; // JPEG marker
-    while (offset < buffer.byteLength) {
-      if (new DataView(buffer).getUint16(offset) === marker) {
-        break;
-      }
-      offset++;
-    }
+    // Create a File object from the Blob
+    const blob = base64toBlob(fileWithoutExif);
+    const fileName = file.name; // You can use the original file name
 
-    // Create a new Blob without the EXIF data
-    const fileWithoutExif = new File([buffer.slice(offset)], file.name, {
-      type: file.type,
-    });
-
-    // Upload the file without EXIF data
     const uploadedFile = await storage.createFile(
       appwriteConfig.storageId,
       ID.unique(),
-      fileWithoutExif
+      new File([blob], fileName, { type: file.type })
     );
 
     return uploadedFile;
@@ -196,20 +185,34 @@ export async function uploadFile(file: File) {
   }
 }
 
-async function readFileAsArrayBuffer(file: File): Promise<ArrayBuffer> {
-  return new Promise<ArrayBuffer>((resolve, reject) => {
+async function readFileAsBase64(file: File): Promise<string> {
+  return new Promise<string>((resolve, reject) => {
     const reader = new FileReader();
 
     reader.onloadend = () => {
-      if (reader.result instanceof ArrayBuffer) {
+      if (typeof reader.result === "string") {
         resolve(reader.result);
       } else {
-        reject(new Error("Error reading file as ArrayBuffer."));
+        reject(new Error("Error reading file as base64."));
       }
     };
 
-    reader.readAsArrayBuffer(file);
+    reader.readAsDataURL(file);
   });
+}
+
+function base64toBlob(base64Data: string): Blob {
+  const arr = base64Data.split(",");
+  const mime = arr[0].match(/:(.*?);/)![1];
+  const bstr = atob(arr[1]);
+  let n = bstr.length;
+  const u8arr = new Uint8Array(n);
+
+  while (n--) {
+    u8arr[n] = bstr.charCodeAt(n);
+  }
+
+  return new Blob([u8arr], { type: mime });
 }
 
 // ============================== GET FILE URL
