@@ -1,6 +1,6 @@
 import { ID, Query } from "appwrite";
 // import EXIF from "exif-js";
-import { rotateImageSync, readExifDataSync } from "@/lib/utils";
+import { rotateImage, readExifData } from "@/lib/utils";
 import { appwriteConfig, account, databases, storage, avatars } from "./config";
 import { IUpdatePost, INewPost, INewUser, IUpdateUser } from "@/types";
 
@@ -163,17 +163,20 @@ export async function createPost(post: INewPost) {
 }
 
 // ============================== UPLOAD FILE
-export async function uploadFile(file: File, handleOrientation = true) {
+export async function uploadFile(
+  file: File,
+  handleOrientation = true
+): Promise<any> {
   try {
     const processFile = async (inputFile: any) => {
       if (handleOrientation) {
-        const exifData = await readExifDataSync(inputFile);
+        const exifData = await readExifData(inputFile);
         const orientation = exifData && exifData.Orientation;
 
         const imageElement = new Image();
         imageElement.src = URL.createObjectURL(inputFile);
 
-        const rotatedImage = await rotateImageSync(imageElement, orientation);
+        const rotatedImage = await rotateImage(imageElement, orientation);
 
         const rotatedBlob = await fetch(rotatedImage).then((res) => res.blob());
 

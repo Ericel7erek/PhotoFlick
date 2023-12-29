@@ -4,16 +4,15 @@ import EXIF from "exif-js";
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
-export function rotateImageSync(
+export async function rotateImage(
   image: HTMLImageElement,
   orientation: number
-): string {
+): Promise<string> {
   const canvas = document.createElement("canvas");
   const ctx = canvas.getContext("2d");
 
   if (!ctx) {
-    console.error("Unable to get 2D context");
-    return "";
+    throw new Error("Unable to get 2D context");
   }
 
   let width = image.width;
@@ -64,15 +63,13 @@ export function rotateImageSync(
   return rotatedImageUrl;
 }
 
-export function readExifDataSync(originalFile: File): any {
-  const reader = new FileReader();
-  reader.readAsArrayBuffer(originalFile);
-
-  while (!reader.result) {
-    // Wait for the reader to finish
-  }
-
-  return EXIF.readFromBinaryFile(reader.result as ArrayBuffer);
+export async function readExifData(originalFile: File): Promise<any> {
+  return new Promise<any>((resolve) => {
+    const reader = new FileReader();
+    reader.onloadend = () =>
+      resolve(EXIF.readFromBinaryFile(reader.result as ArrayBuffer));
+    reader.readAsArrayBuffer(originalFile);
+  });
 }
 
 export const convertFileToUrl = (file: File) => URL.createObjectURL(file);
