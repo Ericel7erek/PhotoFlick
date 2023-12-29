@@ -1,5 +1,4 @@
 import { ID, Query } from "appwrite";
-import { remove as removeExif } from "piexif";
 // import EXIF from "exif-js";
 // import { rotateImage, readExifData } from "@/lib/utils";
 import { appwriteConfig, account, databases, storage, avatars } from "./config";
@@ -164,55 +163,18 @@ export async function createPost(post: INewPost) {
 }
 
 // ============================== UPLOAD FILE
-
 export async function uploadFile(file: File) {
   try {
-    const fileWithoutExif = removeExif(await readFileAsBase64(file));
-
-    // Create a File object from the Blob
-    const blob = base64toBlob(fileWithoutExif);
-    const fileName = file.name; // You can use the original file name
-
     const uploadedFile = await storage.createFile(
       appwriteConfig.storageId,
       ID.unique(),
-      new File([blob], fileName, { type: file.type })
+      file
     );
 
     return uploadedFile;
   } catch (error) {
-    console.error(error);
+    console.log(error);
   }
-}
-
-async function readFileAsBase64(file: File): Promise<string> {
-  return new Promise<string>((resolve, reject) => {
-    const reader = new FileReader();
-
-    reader.onloadend = () => {
-      if (typeof reader.result === "string") {
-        resolve(reader.result);
-      } else {
-        reject(new Error("Error reading file as base64."));
-      }
-    };
-
-    reader.readAsDataURL(file);
-  });
-}
-
-function base64toBlob(base64Data: string): Blob {
-  const arr = base64Data.split(",");
-  const mime = arr[0].match(/:(.*?);/)![1];
-  const bstr = atob(arr[1]);
-  let n = bstr.length;
-  const u8arr = new Uint8Array(n);
-
-  while (n--) {
-    u8arr[n] = bstr.charCodeAt(n);
-  }
-
-  return new Blob([u8arr], { type: mime });
 }
 
 // ============================== GET FILE URL
