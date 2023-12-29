@@ -1,6 +1,6 @@
 import { ID, Query } from "appwrite";
 // import EXIF from "exif-js";
-import { rotateImage, readExifData } from "@/lib/utils";
+// import { rotateImage, readExifData } from "@/lib/utils";
 import { appwriteConfig, account, databases, storage, avatars } from "./config";
 import { IUpdatePost, INewPost, INewUser, IUpdateUser } from "@/types";
 
@@ -163,47 +163,42 @@ export async function createPost(post: INewPost) {
 }
 
 // ============================== UPLOAD FILE
-export async function uploadFile(
-  file: File,
-  handleOrientation = true
-): Promise<any> {
+export async function uploadFile(file: File) {
   try {
-    const processFile = async (inputFile: any) => {
-      if (handleOrientation) {
-        const exifData = await readExifData(inputFile);
-        const orientation = exifData && exifData.Orientation;
-
-        const imageElement = new Image();
-        imageElement.src = URL.createObjectURL(inputFile);
-
-        const rotatedImage = await rotateImage(imageElement, orientation);
-
-        const rotatedBlob = await fetch(rotatedImage).then((res) => res.blob());
-
-        if (!rotatedBlob) {
-          throw new Error("Error creating Blob from rotated image.");
-        }
-
-        return new File([rotatedBlob], "rotated_image.jpg", {
-          type: "image/jpeg",
-        });
-      } else {
-        return inputFile;
-      }
-    };
-
-    const processedFile = await processFile(file);
+    // Remove EXIF data
+    const fileWithoutExif = await removeExifData(file);
 
     const uploadedFile = await storage.createFile(
       appwriteConfig.storageId,
       ID.unique(),
-      processedFile
+      fileWithoutExif
     );
 
     return uploadedFile;
   } catch (error) {
     console.error(error);
   }
+}
+
+async function removeExifData(originalFile: File): Promise<File> {
+  return new Promise<File>((resolve) => {
+    const reader = new FileReader();
+
+    reader.onloadend = () => {
+      // Create a new Blob without the EXIF data
+      const fileWithoutExif = new File(
+        [reader.result as ArrayBuffer],
+        originalFile.name,
+        {
+          type: originalFile.type,
+        }
+      );
+
+      resolve(fileWithoutExif);
+    };
+
+    reader.readAsArrayBuffer(originalFile);
+  });
 }
 
 // ============================== GET FILE URL
