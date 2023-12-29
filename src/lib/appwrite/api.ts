@@ -163,17 +163,139 @@ export async function createPost(post: INewPost) {
 }
 
 // ============================== UPLOAD FILE
-export async function uploadFile(file: File) {
+import ExifReader from "exifreader";
+
+export async function uploadFile(file: File, handleOrientation = true) {
   try {
-    const uploadedFile = await storage.createFile(
-      appwriteConfig.storageId,
-      ID.unique(),
-      file
-    );
+    const processFile = async (inputFile: File) => {
+      if (handleOrientation) {
+        // Read Exif data using ExifReader
+        const exifData = await readExif(inputFile);
+        const orientation = exifData && exifData.Orientation;
+
+        // Adjust file if necessary based on Exif data
+        const adjustedFile = await adjustFileBasedOnExif(
+          inputFile,
+          orientation
+        );
+
+        // Upload the adjusted file
+        const uploadedFile = await storage.createFile(
+          appwriteConfig.storageId,
+          ID.unique(),
+          adjustedFile
+        );
+
+        return uploadedFile;
+      } else {
+        // Upload the original file without handling orientation
+        const uploadedFile = await storage.createFile(
+          appwriteConfig.storageId,
+          ID.unique(),
+          inputFile
+        );
+
+        return uploadedFile;
+      }
+    };
+
+    const readExif = (file: File) => {
+      return new Promise<any>((resolve, reject) => {
+        const reader = new FileReader();
+
+        reader.onloadend = () => {
+          try {
+            const tags = ExifReader.load(reader.result as ArrayBuffer);
+            resolve(tags);
+          } catch (error) {
+            reject(error);
+          }
+        };
+
+        reader.readAsArrayBuffer(file);
+      });
+    };
+
+    const adjustFileBasedOnExif = async (
+      inputFile: File,
+      orientation: number
+    ) => {
+      return new Promise<File>((resolve, reject) => {
+        const imageElement = new Image();
+        imageElement.src = URL.createObjectURL(inputFile);
+
+        imageElement.onload = () => {
+          const canvas = document.createElement("canvas");
+          const ctx = canvas.getContext("2d");
+
+          if (!ctx) {
+            reject(new Error("Unable to get 2D context"));
+            return;
+          }
+
+          let width = imageElement.width;
+          let height = imageElement.height;
+
+          // Adjust width and height based on orientation
+          if (orientation && orientation >= 5) {
+            [width, height] = [height, width];
+          }
+
+          canvas.width = width;
+          canvas.height = height;
+
+          // Apply rotation based on orientation
+          switch (orientation) {
+            case 2:
+              ctx.transform(-1, 0, 0, 1, width, 0);
+              break;
+            case 3:
+              ctx.transform(-1, 0, 0, -1, width, height);
+              break;
+            case 4:
+              ctx.transform(1, 0, 0, -1, 0, height);
+              break;
+            case 5:
+              ctx.transform(0, 1, 1, 0, 0, 0);
+              break;
+            case 6:
+              ctx.transform(0, 1, -1, 0, height, 0);
+              break;
+            case 7:
+              ctx.transform(0, -1, -1, 0, height, width);
+              break;
+            case 8:
+              ctx.transform(0, -1, 1, 0, 0, width);
+              break;
+          }
+
+          // Draw the rotated image
+          ctx.drawImage(imageElement, 0, 0, width, height);
+
+          // Convert the canvas to a blob and resolve the adjusted file
+          canvas.toBlob(
+            (blob) => {
+              if (blob) {
+                const adjustedFile = new File([blob], "adjusted_image.jpg", {
+                  type: "image/jpeg",
+                });
+                resolve(adjustedFile);
+              } else {
+                reject(new Error("Error creating Blob from adjusted image."));
+              }
+            },
+            "image/jpeg",
+            1 // Adjust quality if needed
+          );
+        };
+      });
+    };
+
+    const uploadedFile = await processFile(file);
 
     return uploadedFile;
   } catch (error) {
-    console.log(error);
+    console.error(error);
   }
 }
 

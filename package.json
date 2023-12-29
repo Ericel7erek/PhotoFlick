@@ -20,6 +20,7 @@
     "clsx": "^2.0.0",
     "exif-js": "^2.3.0",
     "exifjs": "^1.1.2",
+    "exifreader": "^4.20.0",
     "heic2any": "^0.0.4",
     "lucide-react": "^0.294.0",
     "piexif": "^0.0.2",
