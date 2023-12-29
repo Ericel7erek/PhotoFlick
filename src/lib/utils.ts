@@ -20,22 +20,18 @@ export async function rotateImage(
     let width = image.width;
     let height = image.height;
 
-    // Adjust width and height for mobile devices
-    if (window.innerWidth < window.innerHeight) {
-      // Portrait orientation
-      if (orientation && orientation >= 5) {
-        [width, height] = [height, width];
-      }
-    } else {
-      // Landscape orientation
-      if (orientation && orientation < 5) {
-        [width, height] = [height, width];
-      }
+    // Adjust width and height based on orientation
+    if (orientation && orientation >= 5) {
+      [width, height] = [height, width];
     }
 
     canvas.width = width;
     canvas.height = height;
 
+    // Clear the canvas to avoid rendering issues
+    ctx.clearRect(0, 0, width, height);
+
+    // Apply rotation based on orientation
     switch (orientation) {
       case 2:
         ctx.transform(-1, 0, 0, 1, width, 0);
@@ -60,16 +56,22 @@ export async function rotateImage(
         break;
     }
 
+    // Draw the rotated image
     ctx.drawImage(image, 0, 0, width, height);
 
-    canvas.toBlob((blob) => {
-      if (blob) {
-        const blobUrl = URL.createObjectURL(blob);
-        resolve(blobUrl);
-      } else {
-        reject(new Error("Error creating Blob from rotated image."));
-      }
-    }, "image/jpeg");
+    // Convert the canvas to a blob and resolve the URL
+    canvas.toBlob(
+      (blob) => {
+        if (blob) {
+          const blobUrl = URL.createObjectURL(blob);
+          resolve(blobUrl);
+        } else {
+          reject(new Error("Error creating Blob from rotated image."));
+        }
+      },
+      "image/jpeg",
+      1 // Adjust quality if needed
+    );
   });
 }
 
